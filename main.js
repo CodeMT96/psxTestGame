@@ -70,8 +70,14 @@ class Game {
 
       this.gltf.traverse((obj) => {
         if(obj.isMesh){
-          const {map} = obj.material
-          if(map){
+          obj.material = new THREE.ShaderMaterial({
+            uniforms: {
+              map: {value: obj.material.map},
+            },vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+          })
+          const {map} = obj.material.uniforms
+          if(map && map.value){
             map.minFilter = THREE.LinearFilter
             map.magFilter = THREE.NearestFilter
             map.needsUpdate = true
