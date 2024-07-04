@@ -1,39 +1,9 @@
 import * as THREE from "./node_modules/three";
 import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
+import { Box } from "./box.js";
 
-//Romans Shaders
-const vertexShader = `
-varying vec2 vUv;
-varying float vAffine;
 
-void main() {
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-  float dist = length(mvPosition);
-  float affine = dist + (mvPosition.w * 8.0) / dist * 0.5;
-  vUv = uv * affine;
-  vAffine = affine;
-
-  vec2 resolution = vec2(320.0, 240.0);
-  vec4 pos = projectionMatrix * mvPosition;
-  pos.xyz /= pos.w;
-  pos.xy = floor(resolution * pos.xy) / resolution;
-  pos.xyz *= pos.w;
-
-  gl_Position = pos;
-}
-`
-
-const fragmentShader = `
-uniform sampler2D map;
-varying vec2 vUv;
-varying float vAffine;
-
-void main() {
-  vec2 uv = vUv / vAffine;
-  vec4 color = texture2D(map, uv);
-  gl_FragColor = color;
-}
-`
 
 class Game {
   constructor() {
@@ -49,6 +19,7 @@ class Game {
     );
 
     this.renderer = new THREE.WebGLRenderer();
+    this.renderer.shadowMap.enabled = true;
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(this.renderer.domElement);
 
@@ -57,38 +28,60 @@ class Game {
     this.scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.castShadow = true;
     directionalLight.position.set(5, 10, 7.5);
     this.scene.add(directionalLight);
+
+    
+
+   this.crate = new Box(this.scene, this.animate.bind(this));
 
     //PSX Render Stuff
     this.renderer.domElement.style.imageRendering = "pixelated";
     //Adding a Cube
-    const loader = new GLTFLoader();
-    loader.load("./assets/theBox.glb", (gltf) => {
-      this.gltf = gltf.scene;
-      this.scene.add(this.gltf);
+    // const loader = new GLTFLoader();
+    // loader.load("./assets/theSmallBox.glb", (gltf) => {
+    //   this.gltf = gltf.scene;
+    //   this.scene.add(this.gltf);
 
-      this.gltf.traverse((obj) => {
-        if(obj.isMesh){
-          obj.material = new THREE.ShaderMaterial({
-            uniforms: {
-              map: {value: obj.material.map},
-            },vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
-          })
-          const {map} = obj.material.uniforms
-          if(map && map.value){
-            map.minFilter = THREE.LinearFilter
-            map.magFilter = THREE.NearestFilter
-            map.needsUpdate = true
-          }
-        }
-      })
-      this.animate();
-    });
+    //   this.gltf.traverse((obj) => {
+    //     if (obj.isMesh) {
+    //       obj.castShadow = true;
+    //       obj.material = new THREE.ShaderMaterial({
+    //         uniforms: {
+    //           map: { value: obj.material.map },
+    //         },
+    //         vertexShader: vertexShader,
+    //         fragmentShader: fragmentShader,
+    //       });
+    //       const { map } = obj.material.uniforms;
+    //       if (map && map.value) {
+    //         map.minFilter = THREE.LinearFilter;
+    //         map.magFilter = THREE.NearestFilter;
+    //         map.needsUpdate = true;
+    //       }
+    //       this.gltf.castShadow = true;
+    //     }
+    //   });
+    //   this.animate();
+    // });
+
+    // const smallBox = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial(0x00f000))
+    // smallBox.castShadow = true
+    // this.scene.add(smallBox)
+
+    const planeGeo = new THREE.BoxGeometry(5, 0.5, 10);
+    const planeMat = new THREE.MeshStandardMaterial({ color: 0xf00ff });
+    const ground = new THREE.Mesh(planeGeo, planeMat);
+    ground.receiveShadow = true;
+    ground.position.y = -3;
+
+    this.scene.add(ground);
 
     window.addEventListener("resize", this.resize.bind(this));
     this.camera.position.z = 5;
+
+    const controls = new OrbitControls(this.camera, this.renderer.domElement);
 
     this.animate = this.animate.bind(this);
     this.animate();
@@ -102,11 +95,10 @@ class Game {
 
   animate() {
     requestAnimationFrame(this.animate);
-    if (this.gltf !== undefined) {
-      this.gltf.rotation.x += 0.001;
-      this.gltf.rotation.y += 0.001;
+    if (this.crate.gltf) {
+      this.crate.gltf.rotation.y += 0.01
     }
-
+    
     this.renderer.render(this.scene, this.camera);
   }
 
