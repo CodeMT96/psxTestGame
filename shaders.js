@@ -22,13 +22,16 @@ void main() {
 
 const fragmentShader = `
 uniform sampler2D map;
+uniform vec3 color;
+uniform bool useTexture;
 varying vec2 vUv;
 varying float vAffine;
 
 void main() {
   vec2 uv = vUv / vAffine;
-  vec4 color = texture2D(map, uv);
-  gl_FragColor = color;
+  vec4 texColor = texture2D(map, uv);
+  vec4 finalColor = useTexture ? texColor : vec4(color, 1.0);
+  gl_FragColor = finalColor;
 }
 `;
 

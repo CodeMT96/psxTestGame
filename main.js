@@ -2,6 +2,7 @@ import * as THREE from "./node_modules/three";
 import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
 import { Box } from "./box.js";
+import { vertexShader,fragmentShader } from "./shaders.js";
 
 
 
@@ -71,7 +72,13 @@ class Game {
     // this.scene.add(smallBox)
 
     const planeGeo = new THREE.BoxGeometry(5, 0.5, 10);
-    const planeMat = new THREE.MeshStandardMaterial({ color: 0xf00ff });
+    const planeMat = new THREE.ShaderMaterial({uniforms: {
+        map: { value: null },
+        color: {value: new THREE.Color(0x000fff)},
+        useTexture: {value: false}
+      },
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,});
     const ground = new THREE.Mesh(planeGeo, planeMat);
     ground.receiveShadow = true;
     ground.position.y = -3;

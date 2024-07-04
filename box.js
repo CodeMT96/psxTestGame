@@ -18,6 +18,7 @@ class Box {
             obj.material = new THREE.ShaderMaterial({
               uniforms: {
                 map: { value: obj.material.map },
+                useTexture: {value: true}
               },
               vertexShader: vertexShader,
               fragmentShader: fragmentShader,
