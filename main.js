@@ -2,9 +2,8 @@ import * as THREE from "./node_modules/three";
 import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitControls.js";
 import { Box } from "./box.js";
-import { vertexShader,fragmentShader } from "./shaders.js";
-
-
+import { GroundBox } from "./groundBox.js";
+import { vertexShader, fragmentShader } from "./shaders.js";
 
 class Game {
   constructor() {
@@ -32,58 +31,43 @@ class Game {
     directionalLight.castShadow = true;
     directionalLight.position.set(5, 10, 7.5);
     this.scene.add(directionalLight);
-
-    
-
-   this.crate = new Box(this.scene, this.animate.bind(this));
+// Keine ahnung wie der Callback funktioniert
+    this.crate = new Box(
+      this.scene,
+      this.animate.bind(this),
+      1,
+      1,
+      1,
+      (box) => {
+        console.log(box.gltf.position.y - box.height /2);
+      }
+    );
 
     //PSX Render Stuff
     this.renderer.domElement.style.imageRendering = "pixelated";
-    //Adding a Cube
-    // const loader = new GLTFLoader();
-    // loader.load("./assets/theSmallBox.glb", (gltf) => {
-    //   this.gltf = gltf.scene;
-    //   this.scene.add(this.gltf);
 
-    //   this.gltf.traverse((obj) => {
-    //     if (obj.isMesh) {
-    //       obj.castShadow = true;
-    //       obj.material = new THREE.ShaderMaterial({
-    //         uniforms: {
-    //           map: { value: obj.material.map },
-    //         },
-    //         vertexShader: vertexShader,
-    //         fragmentShader: fragmentShader,
-    //       });
-    //       const { map } = obj.material.uniforms;
-    //       if (map && map.value) {
-    //         map.minFilter = THREE.LinearFilter;
-    //         map.magFilter = THREE.NearestFilter;
-    //         map.needsUpdate = true;
-    //       }
-    //       this.gltf.castShadow = true;
-    //     }
-    //   });
-    //   this.animate();
+    // const planeGeo = new THREE.BoxGeometry(5, 0.5, 10);
+    // const planeMat = new THREE.ShaderMaterial({
+    //   uniforms: {
+    //     map: { value: null },
+    //     color: { value: new THREE.Color(0x000fff) },
+    //     useTexture: { value: false },
+    //   },
+    //   vertexShader: vertexShader,
+    //   fragmentShader: fragmentShader,
     // });
+    // const ground = new THREE.Mesh(planeGeo, planeMat);
+    // ground.receiveShadow = true;
+    this.groundBox = new GroundBox(this.scene ,5, 0.5, 10)
+    console.log(this.groundBox);
+//     main.js:63 Uncaught 
+// TypeError: Cannot set properties of undefined (setting 'y')
+//     at new Game (main.js:63:31)
+//     at HTMLDocument.<anonymous> (index.html:13:20)
 
-    // const smallBox = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial(0x00f000))
-    // smallBox.castShadow = true
-    // this.scene.add(smallBox)
+    this.groundBox.position.y = -3;
 
-    const planeGeo = new THREE.BoxGeometry(5, 0.5, 10);
-    const planeMat = new THREE.ShaderMaterial({uniforms: {
-        map: { value: null },
-        color: {value: new THREE.Color(0x000fff)},
-        useTexture: {value: false}
-      },
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,});
-    const ground = new THREE.Mesh(planeGeo, planeMat);
-    ground.receiveShadow = true;
-    ground.position.y = -3;
-
-    this.scene.add(ground);
+    
 
     window.addEventListener("resize", this.resize.bind(this));
     this.camera.position.z = 5;
@@ -103,9 +87,9 @@ class Game {
   animate() {
     requestAnimationFrame(this.animate);
     if (this.crate.gltf) {
-      this.crate.gltf.rotation.y += 0.01
+      this.crate.gltf.rotation.y += 0.01;
     }
-    
+
     this.renderer.render(this.scene, this.camera);
   }
 
