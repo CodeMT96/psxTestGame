@@ -32,12 +32,14 @@ class Game {
     directionalLight.position.set(5, 10, 7.5);
     this.scene.add(directionalLight);
 // Keine ahnung wie der Callback funktioniert
+//Wahrscheinlich würde das auch so funktionieren wie der ground
     this.crate = new Box(
       this.scene,
       this.animate.bind(this),
       1,
       1,
       1,
+      {x:0,y:-0.01,z:0},
       (box) => {
         console.log(box.gltf.position.y - box.height /2);
       }
@@ -46,26 +48,10 @@ class Game {
     //PSX Render Stuff
     this.renderer.domElement.style.imageRendering = "pixelated";
 
-    // const planeGeo = new THREE.BoxGeometry(5, 0.5, 10);
-    // const planeMat = new THREE.ShaderMaterial({
-    //   uniforms: {
-    //     map: { value: null },
-    //     color: { value: new THREE.Color(0x000fff) },
-    //     useTexture: { value: false },
-    //   },
-    //   vertexShader: vertexShader,
-    //   fragmentShader: fragmentShader,
-    // });
-    // const ground = new THREE.Mesh(planeGeo, planeMat);
-    // ground.receiveShadow = true;
-    this.groundBox = new GroundBox(this.scene ,5, 0.5, 10)
-    console.log(this.groundBox);
-//     main.js:63 Uncaught 
-// TypeError: Cannot set properties of undefined (setting 'y')
-//     at new Game (main.js:63:31)
-//     at HTMLDocument.<anonymous> (index.html:13:20)
 
-    this.groundBox.position.y = -3;
+    this.groundBox = new GroundBox(this.scene, 5, 0.5, 10)
+    this.groundBox.ground.position.y = -2;
+    console.log(this.groundBox.ground.position.y - this.groundBox.height /2);
 
     
 
@@ -87,9 +73,9 @@ class Game {
   animate() {
     requestAnimationFrame(this.animate);
     if (this.crate.gltf) {
-      this.crate.gltf.rotation.y += 0.01;
+      this.crate.update()
     }
-
+    
     this.renderer.render(this.scene, this.camera);
   }
 

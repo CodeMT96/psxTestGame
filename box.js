@@ -1,42 +1,67 @@
 import * as THREE from "./node_modules/three";
-import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js"
-import { vertexShader,fragmentShader } from "./shaders.js";
+import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+import { vertexShader, fragmentShader } from "./shaders.js";
 // Callback ist von chatGPT Kein plan wie der funktioniert
 class Box {
-    constructor(scene, animate, width, height, depth, onLoadCallback) {
-      this.scene = scene;
-      this.animate = animate;
-      this.height = height
-      this.width = width
-      this.depth = depth
+  constructor(
+    scene,
+    animate,
+    width,
+    height,
+    depth,
+    velocity = {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    onLoadCallback
+  ) {
+    this.scene = scene;
+    this.animate = animate;
+    this.height = height;
+    this.width = width;
+    this.depth = depth;
+    this.velocity = velocity;
 
-      const loader = new GLTFLoader();
-      loader.load("./assets/theSmallBox.glb", (gltf) => {
-        this.gltf = gltf.scene;
-        this.gltf.scale.set(width, height, depth)
-        this.scene.add(this.gltf);
+    const loader = new GLTFLoader();
+    loader.load("./assets/theSmallBox.glb", (gltf) => {
+      this.gltf = gltf.scene;
+      this.gltf.scale.set(width, height, depth);
+      this.scene.add(this.gltf);
 
-        this.gltf.traverse((obj) => {
-          if (obj.isMesh) {
-            obj.castShadow = true;
-            obj.material = new THREE.ShaderMaterial({
-              uniforms: {
-                map: { value: obj.material.map },
-                useTexture: {value: true}
-              },
-              vertexShader: vertexShader,
-              fragmentShader: fragmentShader,
-            });
-            const { map } = obj.material.uniforms;
-            if (map && map.value) {
-              map.minFilter = THREE.LinearFilter;
-              map.magFilter = THREE.NearestFilter;
-              map.needsUpdate = true;
-            }
+      this.topFace = this.gltf.position.y + this.height / 2;
+      this.bottomFace = this.gltf.position.y - this.height / 2;
+      this.gltf.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.castShadow = true;
+          obj.material = new THREE.ShaderMaterial({
+            uniforms: {
+              map: { value: obj.material.map },
+              useTexture: { value: true },
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+          });
+          const { map } = obj.material.uniforms;
+          if (map && map.value) {
+            map.minFilter = THREE.LinearFilter;
+            map.magFilter = THREE.NearestFilter;
+            map.needsUpdate = true;
           }
-        });
-        if (onLoadCallback) onLoadCallback(this)
+        }
       });
-    }
+      console.log(this.topFace, this.bottomFace);
+      if (onLoadCallback) onLoadCallback(this);
+    });
   }
-  export {Box}
+  update() {
+    this.topFace = this.gltf.position.y + this.height / 2;
+    this.bottomFace = this.gltf.position.y - this.height / 2;
+
+    //Cube Falling
+    this.gltf.position.x += this.velocity.x;
+    this.gltf.position.y += this.velocity.y;
+    this.gltf.position.z += this.velocity.z;
+  }
+}
+export { Box };
