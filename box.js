@@ -58,10 +58,10 @@ class Box {
     this.topFace = this.gltf.position.y + this.height / 2;
     this.bottomFace = this.gltf.position.y - this.height / 2;
 
+    this.velocity.y += -0.01
+
     //Cube Falling
-    this.gltf.position.x += this.velocity.x;
     this.gltf.position.y += this.velocity.y;
-    this.gltf.position.z += this.velocity.z;
   }
 }
 export { Box };

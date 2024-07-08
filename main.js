@@ -4,6 +4,7 @@ import { OrbitControls } from "./node_modules/three/examples/jsm/controls/OrbitC
 import { Box } from "./box.js";
 import { GroundBox } from "./groundBox.js";
 import { vertexShader, fragmentShader } from "./shaders.js";
+import { KeyEvents } from "./movementKeys.js";
 
 class Game {
   constructor() {
@@ -32,14 +33,14 @@ class Game {
     directionalLight.position.set(5, 10, 7.5);
     this.scene.add(directionalLight);
 // Keine ahnung wie der Callback funktioniert
-//Wahrscheinlich würde das auch so funktionieren wie der ground
+//Wahrscheinlich würde das auch so funktionieren wie der ground(obj)
     this.crate = new Box(
       this.scene,
       this.animate.bind(this),
       1,
       1,
       1,
-      {x:0,y:-0.01,z:0},
+      {x:0,y:-0.09,z:0},
       (box) => {
         console.log(box.gltf.position.y - box.height /2);
       }
@@ -59,7 +60,7 @@ class Game {
     this.camera.position.z = 5;
 
     const controls = new OrbitControls(this.camera, this.renderer.domElement);
-
+    this.keyEvents = new KeyEvents()
     this.animate = this.animate.bind(this);
     this.animate();
   }
@@ -70,14 +71,51 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  handleKeyMovements() {
+    const speed = 0.1;
+
+    if (this.keyEvents.isKeyPressed("KeyA")) {
+      this.crate.gltf.position.x -= speed;
+    }
+    if (this.keyEvents.isKeyPressed("KeyD")) {
+      this.crate.gltf.position.x += speed;
+    }
+    if (this.keyEvents.isKeyPressed("KeyW")) {
+      this.crate.gltf.position.z -= speed;
+    }
+    if (this.keyEvents.isKeyPressed("KeyS")) {
+      this.crate.gltf.position.z += speed;
+    }
+    if (this.keyEvents.isKeyPressed("Space") && this.crate.gltf.position.y <= this.groundBox.topFace) {
+      this.crate.gltf.position.y += speed;
+      console.log("hi");
+    }
+  }
+
   animate() {
     requestAnimationFrame(this.animate);
+  
     if (this.crate.gltf) {
-      this.crate.update()
+      this.crate.update();
+      //No way hätte ich das in time geschafft ohne AI 
+      // Update the faces
+      this.crate.topFace = this.crate.gltf.position.y + this.crate.height / 2;
+      this.crate.bottomFace = this.crate.gltf.position.y - this.crate.height / 2;
+      this.groundBox.topFace = this.groundBox.ground.position.y + this.groundBox.height / 2;
+  
+      // Collision detection and response
+      if (this.crate.bottomFace <= this.groundBox.topFace) {
+        this.crate.gltf.position.y = this.groundBox.topFace + this.crate.height / 2; // Adjust position to stay on top of the ground
+        this.crate.velocity.y = -this.crate.velocity.y * 0.8; // Invert and reduce velocity to simulate bounce with energy loss
+      } else {
+        this.crate.gltf.position.y += this.crate.velocity.y; // Update position normally if no collision
+      }
+      this.handleKeyMovements()
     }
-    
+  
     this.renderer.render(this.scene, this.camera);
   }
+  
 
   render() {
     this.renderer.render(this.scene, this.scene);
